@@ -1,0 +1,65 @@
+
+import entity.Todolist;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.Persistence;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+
+@WebServlet(name = "ToDoApp", urlPatterns = {"/main", "/delete"})
+public class ToDoServlet extends HttpServlet {
+
+
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+
+        getServletContext().getRequestDispatcher("/addItem.jsp").forward(request, response);
+
+    }
+
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("default");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        String addToDo = request.getParameter("item");
+        System.out.println(addToDo);
+        if (addToDo != null) {
+            transaction.begin();
+
+            Todolist item = new Todolist();
+            item.setItem(addToDo);
+            entityManager.persist(item);
+
+            transaction.commit();
+            entityManager.clear();
+            entityManagerFactory.close();
+        }
+        String deleteNumber = request.getParameter("Id");
+        if (deleteNumber != null) {
+            System.out.println(deleteNumber);
+            transaction.begin();
+            try {
+                Todolist item = entityManager.find(Todolist.class, deleteNumber);
+
+                entityManager.remove(item);
+            } catch (Exception e) {
+                System.out.println("error try again");
+            }
+            transaction.commit();
+            entityManager.clear();
+
+            entityManagerFactory.close();
+
+        }
+        getServletContext().getRequestDispatcher("/showList.jsp").forward(request, response);
+
+    }
+
+}
